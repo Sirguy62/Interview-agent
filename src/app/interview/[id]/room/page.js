@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import InterviewTimer from "./InterviewTimer";
 import AudioCapture from "./AudioCapture";
+import EndInterviewButton from "./EndInterviewButton";
 
 export default async function InterviewRoom(props) {
   // ✅ Next.js 16: params is a Promise
@@ -57,9 +58,7 @@ export default async function InterviewRoom(props) {
         </p>
       </div>
 
-      <button className="bg-red-600 text-white px-4 py-2 rounded">
-        End interview
-      </button>
+      <EndInterviewButton interviewId={interview.id} />
     </div>
   );
 }
