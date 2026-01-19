@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+////////////////////////////////////////////////////
+// ENUMS
+////////////////////////////////////////////////////
+
+enum UserRole {
+  CANDIDATE
+  EMPLOYER
+  ADMIN
+}
+
+enum ExperienceLevel {
+  JUNIOR
+  MID
+  SENIOR
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum Recommendation {
+  STRONG_HIRE
+  HIRE
+  NO_HIRE
+}
+
+enum MediaType {
+  AUDIO
+  SCREEN
+}
+
+////////////////////////////////////////////////////
+// MODELS
+////////////////////////////////////////////////////
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      UserRole @default(CANDIDATE)
+  createdAt DateTime @default(now())
+
+  candidateProfile CandidateProfile?
+  interviews       Interview[]
+}
+
+model CandidateProfile {
+  id        String @id @default(cuid())
+  userId    String @unique
+
+  timezone  String
+  experienceLevel ExperienceLevel
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model InterviewDefinition {
+  id        String @id @default(cuid())
+
+  track      String
+  discipline String
+  role       String
+  focus      String?
+
+  level ExperienceLevel
+
+  durationMinutes     Int
+  requiresScreenShare Boolean
+
+  rubricKey String @unique
+
+  createdAt DateTime @default(now())
+
+  interviews Interview[]
+}
+
+model Interview {
+  id String @id @default(cuid())
+
+  candidateId   String
+  definitionId  String
+
+  scheduledAt DateTime
+  timezone    String
+
+  meetLink String?
+
+  status InterviewStatus @default(SCHEDULED)
+
+  createdAt DateTime @default(now())
+
+  candidate  User                @relation(fields: [candidateId], references: [id])
+  definition InterviewDefinition @relation(fields: [definitionId], references: [id])
+
+  session    InterviewSession?
+  transcript Transcript?
+  scorecard  Scorecard?
+  recordings MediaRecording[]
+}
+
+model InterviewSession {
+  id          String @id @default(cuid())
+  interviewId String @unique
+
+  startedAt DateTime?
+  endedAt   DateTime?
+
+  audioStreamUrl  String?
+  screenStreamUrl String?
+
+  interview Interview @relation(fields: [interviewId], references: [id])
+}
+
+model Transcript {
+  id          String @id @default(cuid())
+  interviewId String @unique
+
+  rawText  String
+  segments Json
+
+  interview Interview @relation(fields: [interviewId], references: [id])
+}
+
+model Scorecard {
+  id          String @id @default(cuid())
+  interviewId String @unique
+
+  overallScore Int
+  strengths    String
+  weaknesses   String
+
+  recommendation Recommendation
+
+  rubricResults Json
+
+  interview Interview @relation(fields: [interviewId], references: [id])
+}
+
+model MediaRecording {
+  id          String @id @default(cuid())
+  interviewId String
+
+  type MediaType
+  url  String
+
+  createdAt DateTime @default(now())
+
+  interview Interview @relation(fields: [interviewId], references: [id])
+}
