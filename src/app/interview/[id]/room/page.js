@@ -3,10 +3,9 @@ import InterviewTimer from "./InterviewTimer";
 import AudioCapture from "./AudioCapture";
 import EndInterviewButton from "./EndInterviewButton";
 
-export default async function InterviewRoom(props) {
-  // ✅ Next.js 16: params is a Promise
-  const params = await props.params;
-  const interviewId = params.id;
+export default async function InterviewRoom({ params }) {
+  // ✅ MUST await params
+  const { id: interviewId } = await params;
 
   if (!interviewId) {
     return <div>Invalid interview ID</div>;
@@ -28,28 +27,13 @@ export default async function InterviewRoom(props) {
     <div className="max-w-3xl mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Interview in progress</h1>
 
-      <div className="border rounded p-4 space-y-2">
-        <p>
-          <b>Role:</b> {interview.definition.role}
-        </p>
-        <p>
-          <b>Level:</b> {interview.definition.level}
-        </p>
-        <p>
-          <b>Duration:</b> {interview.definition.durationMinutes} mins
-        </p>
-      </div>
-
-      {/* 🎙️ Audio capture (client component) */}
       <AudioCapture />
 
-      {/* ⏱️ Timer */}
       <InterviewTimer
         startedAt={interview.session.startedAt}
         duration={interview.definition.durationMinutes}
       />
 
-      {/* 🤖 AI interviewer prompt */}
       <div className="border rounded p-4 bg-black text-white">
         <p className="opacity-80">AI Interviewer</p>
         <p className="mt-2">

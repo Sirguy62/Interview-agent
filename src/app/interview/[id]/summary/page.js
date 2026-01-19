@@ -1,9 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
-export default async function InterviewSummary(props) {
-  // ✅ REQUIRED in Next 16
-  const params = await props.params;
-  const interviewId = params.id;
+export default async function InterviewSummary({ params }) {
+  const { id: interviewId } = await params; // ✅ FIX
 
   if (!interviewId) {
     return <div>Invalid interview ID</div>;
@@ -67,7 +65,7 @@ export default async function InterviewSummary(props) {
             </p>
           </>
         ) : (
-          <p className="text-sm text-gray-500">Pending evaluation</p>
+          <p className="text-sm text-gray-500">Evaluation pending…</p>
         )}
       </div>
     </div>
