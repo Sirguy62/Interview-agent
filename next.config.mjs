@@ -1,5 +1,7 @@
-/** @type {import('next').NextConfig} */
+
 const nextConfig = {
+  turbopack: false,
+
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
