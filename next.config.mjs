@@ -1,6 +1,7 @@
-
+/** @type {import('next').NextConfig} */
 const nextConfig = {
-  turbopack: false,
+  // ✅ REQUIRED in Next.js 16 if webpack config exists
+  turbopack: {},
 
   webpack: (config, { isServer }) => {
     if (!isServer) {
