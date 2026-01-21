@@ -1,10 +1,26 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 
-export default function AudioCapture({ onFinalTranscript, disabled = false }) {
+const AudioCapture = forwardRef(function AudioCapture(
+  { onFinalTranscript = () => {}, disabled = false },
+  ref
+) {
   const recognitionRef = useRef(null);
   const silenceTimer = useRef(null);
+  const bufferRef = useRef("");
+
+  useImperativeHandle(ref, () => ({
+    start() {
+      if (!recognitionRef.current) return;
+      try {
+        recognitionRef.current.start();
+      } catch {}
+    },
+    stop() {
+      recognitionRef.current?.stop();
+    },
+  }));
 
   useEffect(() => {
     if (disabled) return;
@@ -12,10 +28,7 @@ export default function AudioCapture({ onFinalTranscript, disabled = false }) {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    if (!SpeechRecognition) {
-      console.warn("SpeechRecognition not supported");
-      return;
-    }
+    if (!SpeechRecognition) return;
 
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
@@ -24,51 +37,33 @@ export default function AudioCapture({ onFinalTranscript, disabled = false }) {
     recognition.interimResults = true;
     recognition.lang = "en-US";
 
-    let finalText = "";
-
     recognition.onresult = (event) => {
       clearTimeout(silenceTimer.current);
 
-      let interim = "";
-
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-
-        if (event.results[i].isFinal) {
-          finalText += transcript + " ";
-        } else {
-          interim += transcript;
-        }
+        bufferRef.current += event.results[i][0].transcript + " ";
       }
 
-      // Auto-submit after silence
       silenceTimer.current = setTimeout(() => {
-        if (finalText.trim()) {
-          onFinalTranscript(finalText.trim());
-          finalText = "";
+        const text = bufferRef.current.trim();
+        if (text) {
+          onFinalTranscript(text);
+          bufferRef.current = "";
         }
       }, 1200);
     };
 
-    recognition.onerror = (e) => {
-      console.error("Speech error:", e);
-    };
-
     recognition.onend = () => {
-      // 🔁 THIS IS THE CRITICAL PART
-      if (!disabled) {
-        recognition.start();
-      }
+      if (!disabled) recognition.start();
     };
-
-    recognition.start();
 
     return () => {
-      recognition.onend = null;
       recognition.stop();
       clearTimeout(silenceTimer.current);
     };
   }, [disabled, onFinalTranscript]);
 
   return null;
-}
+});
+
+export default AudioCapture;
